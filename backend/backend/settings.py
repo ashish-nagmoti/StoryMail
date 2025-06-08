@@ -69,7 +69,7 @@ CORS_ALLOW_METHODS = [
 ]
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', "https://story-mail-olive.vercel.app",]
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Set to True in production
 CSRF_USE_SESSIONS = False
