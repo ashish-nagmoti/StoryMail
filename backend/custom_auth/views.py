@@ -27,7 +27,7 @@ oauth.register(
     client_secret=settings.AUTH0_CLIENT_SECRET,
     client_kwargs={
         "scope": "openid profile email",
-        "audience": "http://localhost:8000/api",
+        "audience": settings.AUTH0_AUDIENCE,
     },
     server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
 )
