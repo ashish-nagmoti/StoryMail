@@ -155,7 +155,7 @@ DATABASES = {
         'NAME': 'storymail_db',
         'USER': 'ashish',
         'PASSWORD': pwd,
-        'HOST': 'localhost',
+        'HOST': os.environ.get("DATABASE_URL")  ,
         'PORT': '5432',
     }
 }
