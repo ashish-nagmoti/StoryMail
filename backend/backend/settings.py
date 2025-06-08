@@ -216,4 +216,4 @@ AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
 AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
 AUTH0_AUDIENCE = os.environ.get("AUTH0_AUDIENCE")  # API audience - defaults to client_id
 
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
