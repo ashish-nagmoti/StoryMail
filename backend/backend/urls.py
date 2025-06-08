@@ -22,7 +22,7 @@ from custom_auth.views import (
 from mainlogic.views import (
     DashboardRedirectView, PostmarkInboundView, UserInfoView,
     CategoryStatsView, EmailListView, EmailDetailView, ChatAPIView,
-    DigestAPIView
+    DigestAPIView, DashboardStatsView
 )
 
 urlpatterns = [
@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/emails/<int:email_id>/', EmailDetailView.as_view(), name='email_detail'),
     path('api/chat/', ChatAPIView.as_view(), name='chat_api'),
     path('api/digest/', DigestAPIView.as_view(), name='digest_api'),
+    path('api/dashboard/stats/', DashboardStatsView.as_view(), name='dashboard_stats'),
 ]

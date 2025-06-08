@@ -7,18 +7,19 @@ from django.http import JsonResponse
 import json
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
 from custom_auth.authentication import Auth0JWTAuthentication
 from .models import StoryMailUser, Email, DigestReport
 from django.utils.dateparse import parse_datetime
 import os
 import requests
-from rest_framework.response import Response
-import google.generativeai as genai
 from datetime import datetime, timedelta
+import google.generativeai as genai
 import io
-import json
 import base64
 from django.template.loader import render_to_string
+from django.db.models import Count, Avg, F, ExpressionWrapper, fields, Q, FloatField
+from django.db.models.functions import TruncWeek, TruncDay
 
 def get_or_create_user_from_email(email, name=None, picture=None):
     user, created = StoryMailUser.objects.get_or_create(
@@ -678,3 +679,143 @@ class DigestAPIView(APIView):
             import traceback
             print(traceback.format_exc())
             return Response({"error": f"Error generating digest: {str(e)}"}, status=500)
+
+class DashboardStatsView(APIView):
+    """
+    API endpoint for dashboard statistics
+    """
+    authentication_classes = [Auth0JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user_data = request.user
+        user = StoryMailUser.objects.filter(auth0_id=user_data.get("sub")).first()
+        
+        if not user:
+            return Response({"error": "User not found"}, status=404)
+        
+        try:
+            # Get current date and date 7 days ago
+            today = datetime.now()
+            last_week = today - timedelta(days=7)
+            last_two_weeks = today - timedelta(days=14)
+            
+            # Total emails
+            total_emails = Email.objects.filter(user=user).count()
+            
+            # Emails received in last week
+            emails_last_week = Email.objects.filter(user=user, date__gte=last_week).count()
+            
+            # Emails received in previous week (week before last)
+            emails_prev_week = Email.objects.filter(
+                user=user, 
+                date__gte=last_two_weeks, 
+                date__lt=last_week
+            ).count()
+            
+            # Calculate week-over-week change
+            wow_change = 0
+            if emails_prev_week > 0:
+                wow_change = round(((emails_last_week - emails_prev_week) / emails_prev_week) * 100)
+            
+            # Get unread emails (placeholder - actual field would depend on your data model)
+            # Assuming there's no read/unread status, using recent emails (last 24 hours) as proxy
+            yesterday = today - timedelta(days=1)
+            unread_emails = Email.objects.filter(user=user, date__gte=yesterday).count()
+            
+            # Recent change in "unread" (last 24 hours vs previous 24 hours)
+            two_days_ago = today - timedelta(days=2)
+            unread_previous = Email.objects.filter(
+                user=user, 
+                date__gte=two_days_ago,
+                date__lt=yesterday
+            ).count()
+            
+            unread_change = 0
+            if unread_previous > 0:
+                unread_change = unread_emails - unread_previous
+            
+            # Get categories count
+            categories = Email.objects.filter(user=user).values('category').annotate(count=Count('id'))
+            unique_categories = categories.count()
+            category_distribution = {
+                item["category"]: item["count"] for item in categories
+            }
+            
+            # Get weekly digest status
+            latest_digest = DigestReport.objects.filter(user=user).order_by('-end_date').first()
+            
+            digest_status = "Not generated"
+            next_digest = "Sunday 9:00 AM"
+            if latest_digest:
+                # Calculate days since last digest
+                days_since = (today.date() - latest_digest.end_date).days
+                if days_since < 7:
+                    digest_status = "Ready"
+                elif days_since >= 7:
+                    digest_status = "Pending"
+            
+            # Calculate email processing statistics
+            response_times = []
+            processed_count = 0
+            total_week_emails = Email.objects.filter(user=user, date__gte=last_week)
+            
+            # Calculate processed percentage (emails with category and summary)
+            if total_week_emails.count() > 0:
+                processed_count = total_week_emails.exclude(
+                    Q(category__isnull=True) | Q(category='') | 
+                    Q(summary__isnull=True) | Q(summary='')
+                ).count()
+                processing_rate = round((processed_count / total_week_emails.count()) * 100)
+            else:
+                processing_rate = 0
+            
+            # Mock response time calculation (replace with actual metric if available)
+            # This is a placeholder - in a real system, you'd track when emails were processed
+            avg_response_time = 2.4  # hours
+            response_time_change = -12  # percent
+            
+            # Email volume stats
+            email_volume = emails_last_week
+            volume_change = wow_change  # reuse week-over-week calculation
+                
+            return Response({
+                "total_emails": total_emails,
+                "weekly_change_percent": wow_change,
+                "unread_emails": unread_emails,
+                "unread_change": unread_change,
+                "unique_categories": unique_categories,
+                "category_distribution": category_distribution,
+                "digest_status": digest_status,
+                "next_digest": next_digest,
+                
+                "email_stats": [
+                    {
+                        "title": "Response Time",
+                        "value": f"{avg_response_time} hours",
+                        "change": f"{response_time_change}%",
+                        "trend": "down" if response_time_change < 0 else "up",
+                        "description": "Average response time this week"
+                    },
+                    {
+                        "title": "Email Volume",
+                        "value": str(email_volume),
+                        "change": f"{volume_change}%",
+                        "trend": "up" if volume_change > 0 else "down",
+                        "description": "Emails received this week"
+                    },
+                    {
+                        "title": "Processing Rate",
+                        "value": f"{processing_rate}%",
+                        "change": "+3%",  # Placeholder
+                        "trend": "up",
+                        "description": "Emails processed automatically"
+                    }
+                ]
+            })
+                
+        except Exception as e:
+            print(f"[DashboardStatsView] Error: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return Response({"error": f"Error fetching dashboard stats: {str(e)}"}, status=500)

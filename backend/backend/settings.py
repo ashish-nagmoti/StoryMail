@@ -152,8 +152,8 @@ pwd = os.environ.get('DB_PASSWORD')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'storymail_db',
-        'USER': 'ashish',
+        'NAME': os.environ.get("DB"),
+        'USER': os.environ.get("DB_USER"),
         'PASSWORD': pwd,
         'HOST': os.environ.get("DATABASE_URL")  ,
         'PORT': '5432',
