@@ -68,6 +68,17 @@ StoryMail transforms how you interact with your inbox by leveraging AI to catego
 - Google Generative AI API key
 - Auth0 account
 
+### Email Setup with Postmark
+
+1. Create an account on [Postmark](https://postmarkapp.com/)
+2. Set up an inbound server and note the email address provided by Postmark
+3. Forward your emails to this inbound address
+4. Configure the webhook endpoint in Postmark settings:
+   ```
+   https://storymail-production.up.railway.app/api/postmark/inbound/
+   ```
+5. Emails sent to your Postmark inbound address will now be processed by StoryMail
+6. Make sure account you logged in Storymail is same as account from which you are forwarding mails.
 ### Backend Setup
 
 1. Clone the repository
