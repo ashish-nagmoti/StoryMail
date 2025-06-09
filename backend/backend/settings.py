@@ -57,6 +57,7 @@ MIDDLEWARE = [
 
 # CORS settings - allow your Next.js frontend to make requests
 CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', "https://story-mail-olive.vercel.app"]
 CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = ['Content-Type', 'Authorization']
 CORS_ALLOW_METHODS = [
@@ -69,7 +70,7 @@ CORS_ALLOW_METHODS = [
 ]
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', "https://story-mail-olive.vercel.app",]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', "https://story-mail-olive.vercel.app"]
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Set to True in production
 CSRF_USE_SESSIONS = False
